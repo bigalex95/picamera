@@ -96,7 +96,15 @@ if __name__ == '__main__':
             mesafe = ser.readline().decode('utf-8').rstrip()
             #print("Mesafe")
             print(type(mesafe))
-            if((int(mesafe)<30 and int(mesafe)>0) or trafiklambasi):
+            if(trafiklambasi):
+                pl.ChangeDutyCycle(0)
+                pr.ChangeDutyCycle(0)
+                GPIO.output(leftForward, GPIO.HIGH)
+                GPIO.output(leftBack, GPIO.LOW)
+                GPIO.output(rightForward, GPIO.HIGH)
+                GPIO.output(rightBack, GPIO.LOW)
+                print('Trafik kırmızı')
+            elif((int(mesafe)<30 and int(mesafe)>0)):
                 pl.ChangeDutyCycle(0)
                 pr.ChangeDutyCycle(0)
                 GPIO.output(leftForward, GPIO.HIGH)
