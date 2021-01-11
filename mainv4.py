@@ -8,6 +8,8 @@ import numpy as np
 import math
 #serihaberlesme
 import serial
+#trafik lambası
+import imutils
 #serit takip
 GPIO.setmode(GPIO.BCM)
 leftForward = 26
@@ -43,9 +45,37 @@ if __name__ == '__main__':
     #serihaberlesme
     ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
     ser.flush()
+    #trafik lambası
+    trafiklambasi=0
+    step=0
 
 
     for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+        #resimi temsil eden numPy dizisini alıp imgOriginal içine atıyoruz
+        image = frame.array
+        lower_hsv=np.array([165,50,50])
+        upper_hsv=np.array([180,250,250])
+     
+        converted=cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
+     
+        mask_hsv=cv2.inRange(converted,lower_hsv,upper_hsv)
+        output_hsv=cv2.bitwise_and(image,image,mask=mask_hsv)
+        
+        img = cv2.medianBlur(output_hsv, 5)
+        gray = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)        
+        gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
+      
+
+        circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,20,
+                                    param1=50,param2=30,minRadius=0,maxRadius=0)
+        print(circles)
+        step+=1
+        if step==20:
+            step=0
+            trafiklambasi=0
+        if step==0 and circles is not None:
+            trafiklambasi=1
+
         image = frame.array
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         blurred = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -66,7 +96,7 @@ if __name__ == '__main__':
             mesafe = ser.readline().decode('utf-8').rstrip()
             #print("Mesafe")
             print(type(mesafe))
-            if(int(mesafe)<30 and int(measfe)>0):
+            if((int(mesafe)<30 and int(measfe)>0) or trafiklambasi):
                 pl.ChangeDutyCycle(0)
                 pr.ChangeDutyCycle(0)
                 GPIO.output(leftForward, GPIO.HIGH)
